@@ -1,0 +1,11 @@
+apt update && apt install expect -y && [ -d "mtproto-installer" ] && rm -rf mtproto-installer; \
+git clone https://github.com/2FrogsStudio/mtproto-installer && cd mtproto-installer && \
+expect -c "
+set timeout 60
+spawn bash install.sh
+expect {
+    -re \".*порт.*:\" { send \"8443\r\"; exp_continue }
+    -re \".*маскировки.*:\" { send \"www.max.ru\r\" }
+}
+interact
+"
