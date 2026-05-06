@@ -1,11 +1,22 @@
-apt update && apt install expect -y && [ -d "mtproto-installer" ] && rm -rf mtproto-installer; \
-git clone https://github.com/2FrogsStudio/mtproto-installer && cd mtproto-installer && \
-expect -c "
+apt update && apt install expect git -y && \
+[ -d "mtproto-installer" ] && rm -rf mtproto-installer; \
+git clone https://github.com/2FrogsStudio/mtproto-installer && \
+cd mtproto-installer && \
+expect -c '
 set timeout 60
 spawn bash install.sh
 expect {
-    -re \".*порт.*:\" { send \"8443\r\"; exp_continue }
-    -re \".*маскировки.*:\" { send \"www.max.ru\r\" }
+    -re {.*порт.*:} { send "8443\r"; exp_continue }
+    -re {.*маскировки.*:} { send "www.max.ru\r"; exp_continue }
+    eof
 }
 interact
-"
+' && \
+TOML="$(pwd)/telemt.toml" && \
+[ ! -f "$TOML" ] && TOML="$(pwd)/mtproxy-data/telemt.toml" && \
+sed -i '\''s|use_middle_proxy = false|use_middle_proxy = true|'\'' "$TOML" && \
+sed -i '\''s|tls_domain = ".*"|tls_domain = "www.max.ru"|'\'' "$TOML" && \
+echo "=== Проверка конфига ===" && \
+grep -E "use_middle_proxy|tls_domain" "$TOML" && \
+docker compose restart telemt && \
+echo "=== Готово ==="
